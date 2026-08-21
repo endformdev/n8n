@@ -7101,6 +7101,9 @@ importers:
       autocannon:
         specifier: ^8.0.0
         version: 8.0.0
+      endform:
+        specifier: 0.75.1
+        version: 0.75.1
       eslint-plugin-playwright:
         specifier: catalog:e2e
         version: 2.2.2(eslint@9.29.0(jiti@2.6.1))
@@ -7116,6 +7119,9 @@ importers:
       langsmith:
         specifier: 0.6.0
         version: 0.6.0(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.46.0(@aws-sdk/credential-provider-node@3.972.80)(@smithy/signature-v4@5.7.2)(ws@8.21.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.76))(ws@8.21.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      lodash:
+        specifier: 4.18.1
+        version: 4.18.1(patch_hash=81ead1b07fc8efda87bd2724dbd876ab49f4a0aa03f96c3770060b2ea47d9e0b)
       mockserver-client:
         specifier: ^5.15.0
         version: 5.15.0
@@ -16473,6 +16479,40 @@ packages:
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
+
+  endform-darwin-arm64@0.75.1:
+    resolution: {integrity: sha512-F58NwNV0kzMFudXBMvxvDzYNYv2mo3D4QVUT2BtNUAuG5JqqyrrO4oqZ8tBkWL6TEqNEJDYOiQ+ZtCM3OAlDpA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  endform-darwin-x86@0.75.1:
+    resolution: {integrity: sha512-MZuiwBlYKByRjOIsY1QRhAYSEi00RfX0m3I5kfgarDrWfkpz38eGntja6mzlfAMfEwzAoZh3gdcxJA9Q/cSCbg==}
+    cpu: [x64]
+    os: [darwin]
+
+  endform-linux-arm64@0.75.1:
+    resolution: {integrity: sha512-7x95JEhL3z1xskTbfGL1/PgOdokvwDsl1DrQTBAn6on3NHjcUZaZeK6/RiEp7AGDgSNN2h8yzL2HuiUIxSsK4g==}
+    cpu: [arm64]
+    os: [linux]
+
+  endform-linux-x86@0.75.1:
+    resolution: {integrity: sha512-FfozAXWD1sFN77k2KKQdh31+/n/w5um5DWBHZRFEx/P/H7O2/UP6ndJNcqbARFX/gocn7nIBj8hXFQAl+jFucA==}
+    cpu: [x64]
+    os: [linux]
+
+  endform-win32-arm64@0.75.1:
+    resolution: {integrity: sha512-rKZKwlKmt+4nwYN4QFAPVmL61cWKvpbpUCNXucjG3TQgUwmBPBkpnIJ7Li75YRVMb53+vvDg5nBi/qP16VtN9Q==}
+    cpu: [arm64]
+    os: [win32]
+
+  endform-win32-x86@0.75.1:
+    resolution: {integrity: sha512-O7FHrlzUPKyMw+XKfKbvbdN1SVMsUKcuIwb8ofgTYLJvhIPS0eRVuxGH5uGahDvs4tvMhm+T7TMy8/kBdDmvNw==}
+    cpu: [x64]
+    os: [win32]
+
+  endform@0.75.1:
+    resolution: {integrity: sha512-NiS6ZNPOSHZ2GcKBgA9OohxXPPR0YOuC3Z428hpby7E27AOEJINF/HdDZTlBepVBD7uKXoKWWLMlJiML2CumZA==}
+    hasBin: true
 
   engine.io-client@6.6.6:
     resolution: {integrity: sha512-iY6QdftLQ9pyiPoX082bpf/u1UewnOaJrtJIF9T0++QB34lZrj0uP+Q/bj8AlUsAxqhnkTV2BS8SBZSxOmoV5Q==}
@@ -35271,6 +35311,33 @@ snapshots:
   end-of-stream@1.4.4:
     dependencies:
       once: 1.4.0
+
+  endform-darwin-arm64@0.75.1:
+    optional: true
+
+  endform-darwin-x86@0.75.1:
+    optional: true
+
+  endform-linux-arm64@0.75.1:
+    optional: true
+
+  endform-linux-x86@0.75.1:
+    optional: true
+
+  endform-win32-arm64@0.75.1:
+    optional: true
+
+  endform-win32-x86@0.75.1:
+    optional: true
+
+  endform@0.75.1:
+    optionalDependencies:
+      endform-darwin-arm64: 0.75.1
+      endform-darwin-x86: 0.75.1
+      endform-linux-arm64: 0.75.1
+      endform-linux-x86: 0.75.1
+      endform-win32-arm64: 0.75.1
+      endform-win32-x86: 0.75.1
 
   engine.io-client@6.6.6(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     dependencies:

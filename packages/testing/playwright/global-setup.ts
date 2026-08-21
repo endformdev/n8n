@@ -1,4 +1,5 @@
 import { request } from '@playwright/test';
+import { setTimeout as wait } from 'node:timers/promises';
 
 import { ApiHelpers } from './services/api-helper';
 import { getBackendUrl } from './utils/url-helper';
@@ -20,8 +21,6 @@ async function globalSetup() {
 	}
 
 	console.log(`🔄 Resetting database for ${n8nBaseUrl}...`);
-	// Quick hack till we find out a better health check for the database reset command!
-	await new Promise((resolve) => setTimeout(resolve, 3000));
 	// Create standalone API request context
 	const requestContext = await request.newContext({
 		baseURL: n8nBaseUrl,
@@ -29,7 +28,18 @@ async function globalSetup() {
 
 	try {
 		const api = new ApiHelpers(requestContext);
-		await api.resetDatabase();
+		const deadline = Date.now() + 120_000;
+		let databaseReset = false;
+
+		while (!databaseReset) {
+			try {
+				await api.resetDatabase();
+				databaseReset = true;
+			} catch (error) {
+				if (Date.now() >= deadline) throw error;
+				await wait(500);
+			}
+		}
 		console.log('✅ Database reset completed successfully');
 	} catch (error) {
 		console.error('❌ Failed to reset database', error);

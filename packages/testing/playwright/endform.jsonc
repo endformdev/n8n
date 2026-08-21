@@ -1,0 +1,4 @@
+{
+	"additionalFiles": ["fixtures/**/*", "workflows/**/*"],
+	"concurrentTestLimits": [{ "scope": "within-suite-run", "limit": 6 }]
+}

@@ -15,7 +15,7 @@ const IS_DEV = !!process.env.N8N_EDITOR_URL;
 
 const MACBOOK_WINDOW_SIZE = { width: 1536, height: 960 };
 
-const USER_FOLDER = path.join(os.tmpdir(), `n8n-main-${Date.now()}`);
+const USER_FOLDER = process.env.N8N_USER_FOLDER ?? path.join(os.tmpdir(), `n8n-main-${Date.now()}`);
 
 // Helper to get environment variables from N8N_TEST_ENV
 const getTestEnv = () => {
@@ -53,7 +53,7 @@ const SKIP_WEB_SERVER = process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true';
 
 if (BACKEND_URL && !SKIP_WEB_SERVER) {
 	webServer.push({
-		command: 'cd .. && pnpm start',
+		command: 'cd .. && E2E_TESTS=true pnpm start',
 		url: `${BACKEND_URL}/favicon.ico`,
 		timeout: 30000,
 		reuseExistingServer: IS_DEV ? false : true,

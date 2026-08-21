@@ -3,7 +3,6 @@ import { fixtures as currentsFixtures } from '@currents/playwright';
 import { test as base, expect, request } from '@playwright/test';
 import type { ServiceHelpers } from 'n8n-containers/services/types';
 import type { N8NConfig, N8NStack } from 'n8n-containers/stack';
-import { createN8NStack } from 'n8n-containers/stack';
 
 import { CAPABILITIES, type Capability } from './capabilities';
 import { consoleErrorFixtures } from './console-error-monitor';
@@ -139,6 +138,7 @@ export const test = base.extend<
 				return;
 			}
 
+			const { createN8NStack } = await import('n8n-containers');
 			const container = await createN8NStack(n8nStackConfig);
 			await use(container);
 

@@ -1,0 +1,112 @@
+name: 'Test: E2E Endform'
+
+on:
+  workflow_dispatch:
+    inputs:
+      organization_id:
+        description: 'Endform organization ID'
+        required: true
+        default: 'bPmRTk9H'
+        type: string
+      shards:
+        description: 'Number of independent n8n servers'
+        required: true
+        default: '8'
+        type: choice
+        options:
+          - '1'
+          - '4'
+          - '8'
+          - '12'
+          - '16'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Populate the Turbo cache once so shard jobs only restore build outputs.
+  build:
+    name: Install & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup and Build
+        uses: ./.github/actions/setup-nodejs
+        with:
+          install-command: pnpm install --frozen-lockfile --safe-chain-skip-minimum-package-age
+
+  generate-matrix:
+    name: Generate shard matrix
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup
+        uses: ./.github/actions/setup-nodejs
+        with:
+          build-command: pnpm turbo run build --filter=@n8n/playwright-janitor
+          install-command: pnpm install --frozen-lockfile --safe-chain-skip-minimum-package-age
+
+      - name: Generate duration-weighted matrix
+        id: generate
+        env:
+          SHARDS: ${{ inputs.shards }}
+        run: |
+          MATRIX=$(node packages/testing/playwright/scripts/distribute-tests.mjs --matrix "$SHARDS" --orchestrate)
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  e2e:
+    name: Endform shard ${{ matrix.shard }}
+    needs: [build, generate-matrix]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup and restore build
+        uses: ./.github/actions/setup-nodejs
+        with:
+          install-command: pnpm install --frozen-lockfile --safe-chain-skip-minimum-package-age
+
+      - name: Run Endform shard
+        working-directory: packages/testing/playwright
+        env:
+          CI: 'true'
+          E2E_TESTS: 'true'
+          ENDFORM_API_KEY: ${{ secrets.ENDFORM_API_KEY }}
+          ENDFORM_ORGANIZATION_ID: ${{ inputs.organization_id }}
+          N8N_BASE_URL: http://localhost:5680
+          N8N_USER_FOLDER: ${{ runner.temp }}/n8n-endform
+          RESET_E2E_DB: 'true'
+          SHARD_COUNT: ${{ inputs.shards }}
+          SHARD_SPECS: ${{ matrix.specs }}
+        run: |
+          if [ -z "$ENDFORM_API_KEY" ]; then
+            echo "::error::Add ENDFORM_API_KEY as an Actions secret in this fork."
+            exit 1
+          fi
+
+          SPECS=()
+          if [ "$SHARD_COUNT" != '1' ]; then
+            read -ra SPECS <<< "$SHARD_SPECS"
+          fi
+          pnpm exec endform test \
+            --organization-id "$ENDFORM_ORGANIZATION_ID" \
+            --project=e2e \
+            --reporter=list \
+            "${SPECS[@]}"

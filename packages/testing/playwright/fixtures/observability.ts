@@ -1,7 +1,8 @@
 import type { Fixtures, TestInfo } from '@playwright/test';
 import type { N8NStartupDiagnostics } from 'n8n-containers';
-import { consumeStartupFailure } from 'n8n-containers';
 import type { N8NStack } from 'n8n-containers/stack';
+
+import { getBackendUrl } from '../utils/url-helper';
 
 export type ObservabilityTestFixtures = {
 	autoAttachLogs: undefined;
@@ -161,7 +162,8 @@ export const observabilityFixtures: Fixtures<
 			// so observability/metrics aren't queryable. Drain whatever diagnostics
 			// the container service stashed before re-throwing.
 			if (!n8nContainer) {
-				if (!isFailure) return;
+				if (!isFailure || getBackendUrl()) return;
+				const { consumeStartupFailure } = await import('n8n-containers');
 				const failure = consumeStartupFailure();
 				if (!failure) return;
 				try {
