@@ -17,6 +17,21 @@ on:
         required: false
         default: 'pnpm --filter=n8n-playwright test:local'
         type: string
+      test-runner:
+        description: 'Test runner: playwright or endform'
+        required: false
+        default: 'playwright'
+        type: string
+      endform-concurrency:
+        description: 'Maximum Endform tests sharing one backend'
+        required: false
+        default: '1'
+        type: string
+      endform-exclusive-specs:
+        description: 'Regex matching specs that Endform must run sequentially after the parallel lane'
+        required: false
+        default: ''
+        type: string
       workers:
         description: 'Number of parallel workers'
         required: false
@@ -73,7 +88,7 @@ env:
 
 jobs:
   test:
-    runs-on: ${{ vars.RUNNER_PROVIDER == 'github' && 'ubuntu-latest' || inputs.runner }}
+    runs-on: ${{ (github.repository == 'endformdev/n8n' || vars.RUNNER_PROVIDER == 'github') && 'ubuntu-latest' || inputs.runner }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     permissions:
       contents: read
@@ -98,6 +113,7 @@ jobs:
           QA_METRICS_WEBHOOK_PASSWORD: ${{ secrets.QA_METRICS_WEBHOOK_PASSWORD }}
 
       - name: Install Browsers
+        if: ${{ inputs.test-runner != 'endform' }}
         run: pnpm turbo run install-browsers --filter=n8n-playwright
 
       - name: Load n8n image from cache
@@ -107,7 +123,7 @@ jobs:
           build-variant: ${{ inputs.build-variant }}
 
       - name: Pre-pull Test Container Images
-        if: ${{ !contains(inputs.test-command, 'test:local') }}
+        if: ${{ inputs.test-mode == 'docker-artifact' }}
         run: pnpm --filter n8n-containers exec tsx pull-test-images.ts ${{ matrix.images }} || true
 
       - name: Filter specs to previous-attempt failures
@@ -149,6 +165,44 @@ jobs:
       - name: Run Tests
         if: steps.shard-args.outputs.skip != 'true'
         run: |
+          if [ "$TEST_RUNNER" = 'endform' ]; then
+            if [ -n "$ENDFORM_EXCLUSIVE_SPECS" ]; then
+              if [[ "$SHARD_ARGS" == --shard=* ]]; then
+                echo "Endform exclusive specs require a pre-generated spec matrix."
+                exit 1
+              fi
+
+              read -r -a shard_args <<< "$SHARD_ARGS"
+              parallel_args=()
+              exclusive_args=()
+              for arg in "${shard_args[@]}"; do
+                if [[ "$arg" =~ $ENDFORM_EXCLUSIVE_SPECS ]]; then
+                  exclusive_args+=("$arg")
+                else
+                  parallel_args+=("$arg")
+                fi
+              done
+
+              if (( ${#parallel_args[@]} > 0 )); then
+                echo "Running ${#parallel_args[@]} spec files with Endform concurrency $ENDFORM_CONCURRENCY."
+                # shellcheck disable=SC2086
+                $TEST_COMMAND "${parallel_args[@]}"
+              fi
+
+              if (( ${#exclusive_args[@]} > 0 )); then
+                echo "Running ${#exclusive_args[@]} shared-state spec files sequentially."
+                ENDFORM_CONCURRENCY=1
+                # shellcheck disable=SC2086
+                $TEST_COMMAND "${exclusive_args[@]}"
+              fi
+              exit
+            fi
+
+            # shellcheck disable=SC2086
+            $TEST_COMMAND $SHARD_ARGS
+            exit
+          fi
+
           # --pass-with-no-tests makes Playwright exit 0 when the selected specs
           # resolve to zero runnable tests. Covers the impact-map vs current-suite
           # skew window: a spec the committed coverage map points at may have been
@@ -161,10 +215,14 @@ jobs:
         env:
           # Protect args from template injections
           TEST_COMMAND: ${{ inputs.test-command }}
+          TEST_RUNNER: ${{ inputs.test-runner }}
+          ENDFORM_CONCURRENCY: ${{ inputs.endform-concurrency }}
+          ENDFORM_EXCLUSIVE_SPECS: ${{ inputs.endform-exclusive-specs }}
           # Uses pre-distributed specs if orchestration enabled, otherwise falls back to Playwright sharding
           WORKERS: ${{ env.PLAYWRIGHT_WORKERS }}
           SHARD_ARGS: ${{ steps.shard-args.outputs.args }}
           # Args for actual test command runner
+          ENDFORM_API_KEY: ${{ inputs.test-runner == 'endform' && secrets.ENDFORM_API_KEY || '' }}
           CURRENTS_RECORD_KEY: ${{ secrets.CURRENTS_RECORD_KEY }}
           QA_METRICS_WEBHOOK_URL: ${{ secrets.QA_METRICS_WEBHOOK_URL }}
           QA_METRICS_WEBHOOK_USER: ${{ secrets.QA_METRICS_WEBHOOK_USER }}
@@ -173,6 +231,12 @@ jobs:
           N8N_LICENSE_CERT: ${{ secrets.N8N_LICENSE_CERT }}
           N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
           N8N_TEST_ENV: ${{ inputs.n8n-env }}
+          # Endform runners are remote and cannot access the job's Docker socket. For the fork's
+          # SQLite suite, use Playwright's existing webServer and Endform's automatic proxying.
+          N8N_BASE_URL: ${{ inputs.test-runner == 'endform' && github.repository == 'endformdev/n8n' && 'http://localhost:5680' || '' }}
+          E2E_TESTS: ${{ inputs.test-runner == 'endform' && github.repository == 'endformdev/n8n' && 'true' || '' }}
+          E2E_REMOTE_RUNNER: ${{ inputs.test-runner == 'endform' && 'true' || '' }}
+          RESET_E2E_DB: ${{ inputs.test-runner == 'endform' && github.repository == 'endformdev/n8n' && 'true' || '' }}
 
       - name: Upload Shard Artifacts
         if: always()

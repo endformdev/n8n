@@ -53,8 +53,8 @@ const SKIP_WEB_SERVER = process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true';
 
 if (BACKEND_URL && !SKIP_WEB_SERVER) {
 	webServer.push({
-		command: 'cd .. && pnpm start',
-		url: `${BACKEND_URL}/favicon.ico`,
+		command: 'pnpm --filter=n8n start',
+		url: `${BACKEND_URL}/rest/e2e/env-feature-flags`,
 		timeout: 30000,
 		reuseExistingServer: IS_DEV ? false : true,
 		env: {

@@ -11,7 +11,7 @@ concurrency:
 jobs:
   install-and-build:
     name: Install & Build
-    runs-on: ${{ vars.RUNNER_PROVIDER == 'github' && 'ubuntu-latest' || 'blacksmith-4vcpu-ubuntu-2204' }}
+    runs-on: ${{ (github.repository == 'endformdev/n8n' || vars.RUNNER_PROVIDER == 'github') && 'ubuntu-latest' || 'blacksmith-4vcpu-ubuntu-2204' }}
     env:
       NODE_OPTIONS: '--max-old-space-size=7168'
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -19,11 +19,11 @@ jobs:
       QA_METRICS_WEBHOOK_USER: ${{ secrets.QA_METRICS_WEBHOOK_USER }}
       QA_METRICS_WEBHOOK_PASSWORD: ${{ secrets.QA_METRICS_WEBHOOK_PASSWORD }}
     outputs:
-      ci: ${{ fromJSON(steps.ci-filter.outputs.results).ci == true }}
+      ci: ${{ github.repository == 'n8n-io/n8n' && fromJSON(steps.ci-filter.outputs.results).ci == true }}
       runtime: ${{ fromJSON(steps.ci-filter.outputs.results).runtime == true }}
-      unit: ${{ fromJSON(steps.ci-filter.outputs.results).unit == true }}
+      unit: ${{ github.repository == 'n8n-io/n8n' && fromJSON(steps.ci-filter.outputs.results).unit == true }}
       e2e: ${{ fromJSON(steps.ci-filter.outputs.results).e2e == true }}
-      dev_server_smoke: ${{ fromJSON(steps.ci-filter.outputs.results)['dev-server-smoke'] == true }}
+      dev_server_smoke: ${{ github.repository == 'n8n-io/n8n' && fromJSON(steps.ci-filter.outputs.results)['dev-server-smoke'] == true }}
       workflows: ${{ fromJSON(steps.ci-filter.outputs.results).workflows == true }}
       workflow_scripts: ${{ fromJSON(steps.ci-filter.outputs.results)['workflow-scripts'] == true }}
       db: ${{ fromJSON(steps.ci-filter.outputs.results).db == true }}
@@ -253,9 +253,8 @@ jobs:
         run: |
           pnpm -r pack --dry-run
 
-  # Seeds the SHA-keyed Docker image cache once so that downstream e2e jobs
-  # (each of which invokes prepare-docker internally) short-circuit to a
-  # cache hit instead of racing to rebuild.
+  # Seeds the SHA-keyed Docker image cache once for internal container-based E2E jobs.
+  # The Endform fork uses a local SQLite backend and does not consume this image.
   prepare-docker:
     name: Prepare Docker
     needs: install-and-build
@@ -270,6 +269,7 @@ jobs:
     uses: ./.github/workflows/prepare-docker-reusable.yml
     with:
       branch: ${{ needs.install-and-build.outputs.commit_sha }}
+      runner: ubuntu-latest
     secrets: inherit
 
   # Internal-only 1-spec fail-fast sanity check on sqlite.
@@ -293,13 +293,12 @@ jobs:
       artifact-prefix: sanity
     secrets: inherit
 
-  # Full e2e run. Internal PRs run multi-main (postgres + redis + caddy + 2 mains + 1 worker).
-  # Fork PRs run sqlite-only and skip @licensed tests (no enterprise license secrets on forks).
-  e2e:
-    name: E2E
-    needs: [install-and-build, prepare-docker]
+  # Gives the Endform fork an early signal while the full impacted suite is still running.
+  endform-smoke:
+    name: 'Endform: Fast Signal'
+    needs: install-and-build
     if: >-
-      needs.prepare-docker.result == 'success' &&
+      github.repository == 'endformdev/n8n' &&
       (needs.install-and-build.outputs.runtime == 'true'
         || needs.install-and-build.outputs.e2e == 'true'
         || contains(github.event.pull_request.labels.*.name, 'force-e2e')) &&
@@ -308,9 +307,42 @@ jobs:
     uses: ./.github/workflows/test-e2e-reusable.yml
     with:
       branch: ${{ needs.install-and-build.outputs.commit_sha }}
-      test-mode: docker-artifact
-      test-command: ${{ github.event.pull_request.head.repo.fork == true && 'pnpm --filter=n8n-playwright test:container:sqlite:e2e --grep-invert=@licensed' || 'pnpm --filter=n8n-playwright test:container:multi-main:e2e' }}
+      test-mode: local
+      test-command: >-
+        pnpm --filter=n8n-playwright exec endform test --organization-id=2G1ZCj7X --project=e2e
+        tests/e2e/building-blocks/workflow-entry-points.spec.ts
+        tests/e2e/credentials/crud.spec.ts
+      test-runner: endform
+      endform-concurrency: '4'
+      timeout-minutes: 30
+      artifact-prefix: endform-smoke
+    secrets: inherit
+
+  # Full e2e run. Internal PRs run multi-main (postgres + redis + caddy + 2 mains + 1 worker).
+  # Fork PRs run sqlite-only and skip @licensed tests (no enterprise license secrets on forks).
+  e2e:
+    name: E2E
+    needs: [install-and-build, prepare-docker]
+    if: >-
+      always() &&
+      (needs.prepare-docker.result == 'success'
+        || github.repository == 'endformdev/n8n'
+        || github.event.pull_request.head.repo.fork == true) &&
+      (needs.install-and-build.outputs.runtime == 'true'
+        || needs.install-and-build.outputs.e2e == 'true'
+        || contains(github.event.pull_request.labels.*.name, 'force-e2e')) &&
+      needs.install-and-build.outputs.skip_tests != 'true' &&
+      github.event_name != 'merge_group'
+    uses: ./.github/workflows/test-e2e-reusable.yml
+    with:
+      branch: ${{ needs.install-and-build.outputs.commit_sha }}
+      test-mode: ${{ (github.repository == 'endformdev/n8n' || github.event.pull_request.head.repo.fork == true) && 'local' || 'docker-artifact' }}
+      test-command: ${{ (github.repository == 'endformdev/n8n' || github.event.pull_request.head.repo.fork == true) && 'pnpm --filter=n8n-playwright exec endform test --organization-id=2G1ZCj7X --project=e2e' || 'pnpm --filter=n8n-playwright exec endform test --organization-id=2G1ZCj7X --project=multi-main:e2e' }}
+      test-runner: endform
+      endform-concurrency: ${{ (github.repository == 'endformdev/n8n' || github.event.pull_request.head.repo.fork == true) && '2' || '1' }}
+      endform-exclusive-specs: ${{ (github.repository == 'endformdev/n8n' || github.event.pull_request.head.repo.fork == true) && '(app-config/env-feature-flags|api/webhook-isolate-skip|credentials/global|dynamic-credentials/form-trigger-submit-gate-client|mcp/mcp-(oauth|service)|settings/environments/variables|settings/workers/workers|workflows/editor/tags)\.spec\.ts$' || '' }}
       workers: '1'
+      timeout-minutes: ${{ (github.repository == 'endformdev/n8n' || github.event.pull_request.head.repo.fork == true) && 90 || 30 }}
       pre-generated-matrix: ${{ needs.install-and-build.outputs.matrix }}
       artifact-prefix: e2e
     secrets: inherit
@@ -363,7 +395,7 @@ jobs:
   security-checks:
     name: Security Checks
     needs: install-and-build
-    if: needs.install-and-build.outputs.workflows == 'true'
+    if: needs.install-and-build.outputs.workflows == 'true' && github.repository == 'n8n-io/n8n'
     uses: ./.github/workflows/sec-ci-reusable.yml
     with:
       ref: ${{ needs.install-and-build.outputs.commit_sha }}

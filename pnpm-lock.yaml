@@ -7106,6 +7106,9 @@ importers:
       autocannon:
         specifier: ^8.0.0
         version: 8.0.0
+      endform:
+        specifier: 0.75.3
+        version: 0.75.3
       eslint-plugin-playwright:
         specifier: catalog:e2e
         version: 2.2.2(eslint@9.29.0(jiti@2.6.1)(supports-color@8.1.1))
@@ -16501,6 +16504,40 @@ packages:
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
+
+  endform-darwin-arm64@0.75.3:
+    resolution: {integrity: sha512-7CTjEjrimK47CZI5Tki+1UdDPya2KBfwR1vSBkNC/IbGFu23B9eoKpzNWq4rw6d66HagP9OCheLkwXbQ5pyHHw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  endform-darwin-x86@0.75.3:
+    resolution: {integrity: sha512-SbY2EIZkAtR7F7aEuWIkfqc2C7mx+qO9Jn24ecEgZF5yPl6EqNSmo3Xs9JAoUwYji4ha2LvHMUnA5zHEI07JdQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  endform-linux-arm64@0.75.3:
+    resolution: {integrity: sha512-akW3fFq+wC3S0/aLKzFNaWf3b0gUdop8ItVGxh9JZzDGrOGqsl4/CxzBoO5UhHQsB+BeELYpcx7SXwGMKUs8Rw==}
+    cpu: [arm64]
+    os: [linux]
+
+  endform-linux-x86@0.75.3:
+    resolution: {integrity: sha512-guzjS/xY6RSA8BnjavYlPOksfE4nffTUQhkVVv+OokWyoYjwLpL/eF7aTOO0sG4EZ/6YC5rAHq0LIQ4sMs+5ng==}
+    cpu: [x64]
+    os: [linux]
+
+  endform-win32-arm64@0.75.3:
+    resolution: {integrity: sha512-dbP6ok4yfDIH6ctrXXvkzuush3LWIFx1JkZdgzbhpkEQ8icfBAWqC/wnS/nEiWkSi0dGz7IGXNG+GU3Vx89ZRA==}
+    cpu: [arm64]
+    os: [win32]
+
+  endform-win32-x86@0.75.3:
+    resolution: {integrity: sha512-pygvw6ifZFDH4lvlDFD1nz+5naPPdONEqfnnUFD9NBu0qiYpRV9nzkZQRSkLwEoMxJQOA3xQOUGQq9eSWzYOyQ==}
+    cpu: [x64]
+    os: [win32]
+
+  endform@0.75.3:
+    resolution: {integrity: sha512-cc3YQdQiMHFS0RFQDtVflj1Cedae2rmuY/mJtwByF2GFxyMqSuPdK4GgYX7RBIdWhCSKb7IbN9Ef8pfLxjebbQ==}
+    hasBin: true
 
   enhanced-resolve@5.18.2:
     resolution: {integrity: sha512-6Jw4sE1maoRJo3q8MsSIn2onJFbLTOjY9hlx4DZXmOKvLRd1Ok2kXmAGXaafL2+ijsJZ1ClYbl/pmqr9+k4iUQ==}
@@ -36358,6 +36395,33 @@ snapshots:
   end-of-stream@1.4.4:
     dependencies:
       once: 1.4.0
+
+  endform-darwin-arm64@0.75.3:
+    optional: true
+
+  endform-darwin-x86@0.75.3:
+    optional: true
+
+  endform-linux-arm64@0.75.3:
+    optional: true
+
+  endform-linux-x86@0.75.3:
+    optional: true
+
+  endform-win32-arm64@0.75.3:
+    optional: true
+
+  endform-win32-x86@0.75.3:
+    optional: true
+
+  endform@0.75.3:
+    optionalDependencies:
+      endform-darwin-arm64: 0.75.3
+      endform-darwin-x86: 0.75.3
+      endform-linux-arm64: 0.75.3
+      endform-linux-x86: 0.75.3
+      endform-win32-arm64: 0.75.3
+      endform-win32-x86: 0.75.3
 
   enhanced-resolve@5.18.2:
     dependencies:

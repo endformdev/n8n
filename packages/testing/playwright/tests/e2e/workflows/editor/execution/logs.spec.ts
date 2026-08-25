@@ -16,7 +16,7 @@ const NODES = {
 };
 
 test.describe(
-	'Logs',
+	'Logs @capability:proxy',
 	{
 		annotation: [{ type: 'owner', description: 'Catalysts' }],
 	},

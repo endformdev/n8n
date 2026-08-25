@@ -1,4 +1,5 @@
 import { request } from '@playwright/test';
+import { setTimeout as wait } from 'node:timers/promises';
 
 import { ApiHelpers } from './services/api-helper';
 import { getBackendUrl } from './utils/url-helper';
@@ -20,14 +21,28 @@ async function globalSetup() {
 	}
 
 	console.log(`🔄 Resetting database for ${n8nBaseUrl}...`);
-	// Quick hack till we find out a better health check for the database reset command!
-	await new Promise((resolve) => setTimeout(resolve, 3000));
 	// Create standalone API request context
 	const requestContext = await request.newContext({
 		baseURL: n8nBaseUrl,
 	});
 
 	try {
+		const readinessDeadline = Date.now() + 30_000;
+		let e2eApiReady = false;
+		while (Date.now() < readinessDeadline) {
+			const response = await requestContext.get('/rest/e2e/env-feature-flags');
+			// The editor fallback returns HTML with 200 before REST controllers are mounted.
+			if (response.ok() && response.headers()['content-type']?.includes('application/json')) {
+				e2eApiReady = true;
+				break;
+			}
+			await wait(500);
+		}
+
+		if (!e2eApiReady) {
+			throw new Error('Timed out waiting for E2E API routes');
+		}
+
 		const api = new ApiHelpers(requestContext);
 		await api.resetDatabase();
 		console.log('✅ Database reset completed successfully');

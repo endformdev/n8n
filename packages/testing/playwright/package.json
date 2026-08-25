@@ -69,6 +69,7 @@
     "@types/jsonwebtoken": "catalog:",
     "@types/lodash": "catalog:",
     "autocannon": "^8.0.0",
+    "endform": "0.75.3",
     "eslint-plugin-playwright": "catalog:e2e",
     "flatted": "catalog:",
     "generate-schema": "2.6.0",

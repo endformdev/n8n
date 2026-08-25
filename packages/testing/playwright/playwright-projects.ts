@@ -219,7 +219,13 @@ export function getProjects(): Project[] {
 			testDir: './tests/e2e',
 			grepInvert: ALLOW_CONTAINER_ONLY ? undefined : CONTAINER_ONLY,
 			fullyParallel: true,
-			use: { baseURL: getFrontendUrl() },
+			timeout: process.env.E2E_REMOTE_RUNNER === 'true' ? 120_000 : undefined,
+			use: {
+				baseURL: getFrontendUrl(),
+				...(process.env.E2E_REMOTE_RUNNER === 'true'
+					? { actionTimeout: 30_000, navigationTimeout: 30_000 }
+					: {}),
+			},
 		});
 		projects.push({
 			name: 'dev-server-smoke',
