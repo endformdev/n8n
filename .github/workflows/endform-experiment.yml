@@ -1,0 +1,97 @@
+name: 'Endform: Incremental experiment'
+
+on:
+  push:
+    branches: [augustoccesar/endform-integration]
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    if: github.repository == 'endformdev/n8n'
+    name: '${{ matrix.runner }}: one home-page test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        runner: [playwright, endform]
+    env:
+      NODE_OPTIONS: '--max-old-space-size=6144'
+      N8N_BASE_URL: http://localhost:5680
+      RESET_E2E_DB: 'true'
+      N8N_SKIP_LICENSES: 'true'
+      PLAYWRIGHT_BROWSERS_PATH: '${{ github.workspace }}/packages/testing/playwright/.playwright-browsers'
+    steps:
+      - name: Checkout
+        uses: useblacksmith/checkout@bcec731f1eb1367240608d1c889a75b96db6ec53 # v1.5.0
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-nodejs
+        with:
+          build-command: ''
+
+      - name: Build
+        run: pnpm build > build.log 2>&1
+
+      - name: Record versions
+        working-directory: packages/testing/playwright
+        run: |
+          git rev-parse HEAD
+          node --version
+          pnpm --version
+          pnpm exec playwright --version
+          pnpm exec endform --version
+
+      - name: Check types and lint
+        working-directory: packages/testing/playwright
+        run: |
+          pnpm typecheck > typecheck.log 2>&1
+          pnpm lint > lint.log 2>&1
+
+      - name: Install Chromium
+        if: matrix.runner == 'playwright'
+        working-directory: packages/testing/playwright
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run one existing test
+        working-directory: packages/testing/playwright
+        env:
+          TEST_RUNNER: '${{ matrix.runner }}'
+          ENDFORM_API_KEY: "${{ matrix.runner == 'endform' && secrets.ENDFORM_API_KEY || '' }}"
+        run: |
+          args=(test --project=e2e tests/e2e/building-blocks/workflow-entry-points.spec.ts --grep='should navigate from home$' --retries=0)
+          if [ "$TEST_RUNNER" = endform ]; then
+            args+=(--organization-id=2G1ZCj7X)
+          else
+            args+=(--workers=1)
+          fi
+          pnpm exec "$TEST_RUNNER" "${args[@]}" > experiment.log 2>&1
+
+      - name: Show log tails
+        if: always()
+        run: |
+          for log in build.log packages/testing/playwright/{typecheck,lint,experiment}.log; do
+            if [ -f "$log" ]; then
+              echo "::group::$log"
+              tail -n 50 "$log"
+              echo '::endgroup::'
+            fi
+          done
+
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: 'endform-experiment-${{ matrix.runner }}-${{ github.run_attempt }}'
+          retention-days: 30
+          path: |
+            build.log
+            packages/testing/playwright/experiment.log
+            packages/testing/playwright/typecheck.log
+            packages/testing/playwright/lint.log
+            packages/testing/playwright/test-results/
+            packages/testing/playwright/test-results.json
+            packages/testing/playwright/playwright-report/
