@@ -500,6 +500,9 @@ catalogs:
     electron:
       specifier: 41.10.4
       version: 41.10.4
+    endform:
+      specifier: 0.76.0
+      version: 0.76.0
     eslint:
       specifier: 9.29.0
       version: 9.29.0
@@ -7647,6 +7650,9 @@ importers:
       axe-html-reporter:
         specifier: ^2.2.11
         version: 2.2.11(axe-core@4.13.0)
+      endform:
+        specifier: 'catalog:'
+        version: 0.76.0
       eslint-plugin-playwright:
         specifier: catalog:e2e
         version: 2.2.2(eslint@9.29.0(jiti@2.6.1)(supports-color@8.1.1))
@@ -17581,6 +17587,40 @@ packages:
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
+
+  endform-darwin-arm64@0.76.0:
+    resolution: {integrity: sha512-uspKKhg6K9u01d3gETnrENNB42s+Oj0JmAgDuA/Ij+/H3g4rvLaShAwIUUf6MQgUwg7oHJGppYz0bgzlrLFcag==}
+    cpu: [arm64]
+    os: [darwin]
+
+  endform-darwin-x86@0.76.0:
+    resolution: {integrity: sha512-eGS8aCru2i7EVdCYmwcz414LPGstzo9bN2/C7cy56QIaIHi71HCccVMIAHWXxgCQcE2/8WoAtcB6OVUB450Rqg==}
+    cpu: [x64]
+    os: [darwin]
+
+  endform-linux-arm64@0.76.0:
+    resolution: {integrity: sha512-V0naw5K33GmQW7yDsZvqCvTi9n5jT1gJpCeYGu70tB7NiOZVGFuOlepqSOZ0ZBzE0KJ2t85eMZj8ocdSuVVQJA==}
+    cpu: [arm64]
+    os: [linux]
+
+  endform-linux-x86@0.76.0:
+    resolution: {integrity: sha512-y4qt59+1rG/H1F7tZZ90fiTPbujHwVzpZE5UynpY/ffxxBkN2mU40y4BricSKX/mfyG0vey8Vp12A+u3evNrYQ==}
+    cpu: [x64]
+    os: [linux]
+
+  endform-win32-arm64@0.76.0:
+    resolution: {integrity: sha512-x+YXkZqmeCW9gcABctk7L7chYYoXA55+XOF56K6iEsiZh/dLpGF6ALpGmVmIlGo9kC5ADnvSqsKlxTO/kJZ+tQ==}
+    cpu: [arm64]
+    os: [win32]
+
+  endform-win32-x86@0.76.0:
+    resolution: {integrity: sha512-yCYi3kheL57pURP56QYl508oI1QK7rDWh1a7jy+YZ749MWKo4XlqJx/I04tMzYKAWYkKtfC2frTjoOY63m1CIQ==}
+    cpu: [x64]
+    os: [win32]
+
+  endform@0.76.0:
+    resolution: {integrity: sha512-qh5PWJ2CuFVEGObkt8OBvk5vmUNo0ET3MWst3GXLqgl/F6GEMW1sqgBdETmtJT8dUe4rIdVPzlpxobpq1Ch+4Q==}
+    hasBin: true
 
   engine.io-client@6.6.6:
     resolution: {integrity: sha512-iY6QdftLQ9pyiPoX082bpf/u1UewnOaJrtJIF9T0++QB34lZrj0uP+Q/bj8AlUsAxqhnkTV2BS8SBZSxOmoV5Q==}
@@ -37726,6 +37766,33 @@ snapshots:
   end-of-stream@1.4.4:
     dependencies:
       once: 1.4.0
+
+  endform-darwin-arm64@0.76.0:
+    optional: true
+
+  endform-darwin-x86@0.76.0:
+    optional: true
+
+  endform-linux-arm64@0.76.0:
+    optional: true
+
+  endform-linux-x86@0.76.0:
+    optional: true
+
+  endform-win32-arm64@0.76.0:
+    optional: true
+
+  endform-win32-x86@0.76.0:
+    optional: true
+
+  endform@0.76.0:
+    optionalDependencies:
+      endform-darwin-arm64: 0.76.0
+      endform-darwin-x86: 0.76.0
+      endform-linux-arm64: 0.76.0
+      endform-linux-x86: 0.76.0
+      endform-win32-arm64: 0.76.0
+      endform-win32-x86: 0.76.0
 
   engine.io-client@6.6.6(bufferutil@4.0.9)(supports-color@8.1.1)(utf-8-validate@5.0.10):
     dependencies:
