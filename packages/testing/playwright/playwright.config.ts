@@ -70,7 +70,7 @@ if (BACKEND_URL && !SKIP_WEB_SERVER) {
 	}
 	webServer.push({
 		command: 'pnpm --dir ../../.. start',
-		url: `${BACKEND_URL}/favicon.ico`,
+		url: `${BACKEND_URL}/healthz/readiness`,
 		timeout: 30000,
 		reuseExistingServer: IS_DEV ? false : true,
 		env: {
