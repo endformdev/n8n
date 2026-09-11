@@ -10,7 +10,7 @@ permissions:
 jobs:
   baseline:
     if: github.repository == 'endformdev/n8n'
-    name: '${{ matrix.runner }}: entry points, credentials, canvas, and node configuration'
+    name: '${{ matrix.runner }}: incremental suite'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -56,14 +56,22 @@ jobs:
         working-directory: packages/testing/playwright
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Run entry points, credentials, canvas, and node configuration
+      - name: Run incremental suite
         working-directory: packages/testing/playwright
         env:
           TEST_RUNNER: '${{ matrix.runner }}'
           E2E_REMOTE_RUNNER: "${{ matrix.runner == 'endform' && 'true' || 'false' }}"
           ENDFORM_API_KEY: "${{ matrix.runner == 'endform' && secrets.ENDFORM_API_KEY || '' }}"
         run: |
-          args=(test --project=e2e tests/e2e/building-blocks/workflow-entry-points.spec.ts tests/e2e/credentials/crud.spec.ts tests/e2e/building-blocks/canvas-actions.spec.ts tests/e2e/building-blocks/node-details-configuration.spec.ts --retries=0)
+          args=(
+            test --project=e2e
+            tests/e2e/building-blocks/workflow-entry-points.spec.ts
+            tests/e2e/credentials/crud.spec.ts
+            tests/e2e/building-blocks/canvas-actions.spec.ts
+            tests/e2e/building-blocks/node-details-configuration.spec.ts
+            tests/e2e/workflows/editor/execution/execution.spec.ts
+            --retries=0
+          )
           if [ "$TEST_RUNNER" = endform ]; then
             args+=(--organization-id=2G1ZCj7X)
           else
