@@ -10,7 +10,7 @@ permissions:
 jobs:
   baseline:
     if: github.repository == 'endformdev/n8n'
-    name: '${{ matrix.runner }}: workflow entry points'
+    name: '${{ matrix.runner }}: entry points and credentials'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -56,14 +56,14 @@ jobs:
         working-directory: packages/testing/playwright
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Run workflow entry points
+      - name: Run entry points and credentials
         working-directory: packages/testing/playwright
         env:
           TEST_RUNNER: '${{ matrix.runner }}'
           E2E_REMOTE_RUNNER: "${{ matrix.runner == 'endform' && 'true' || 'false' }}"
           ENDFORM_API_KEY: "${{ matrix.runner == 'endform' && secrets.ENDFORM_API_KEY || '' }}"
         run: |
-          args=(test --project=e2e tests/e2e/building-blocks/workflow-entry-points.spec.ts --retries=0)
+          args=(test --project=e2e tests/e2e/building-blocks/workflow-entry-points.spec.ts tests/e2e/credentials/crud.spec.ts --retries=0)
           if [ "$TEST_RUNNER" = endform ]; then
             args+=(--organization-id=2G1ZCj7X)
           else
