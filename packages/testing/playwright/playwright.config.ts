@@ -112,7 +112,7 @@ export default defineConfig<CurrentsFixtures, CurrentsWorkerFixtures>({
 	forbidOnly: IS_CI,
 	retries: IS_CI ? 2 : 0,
 	workers: WORKERS,
-	timeout: 60000,
+	timeout: process.env.E2E_REMOTE_RUNNER === 'true' ? 90000 : 60000,
 	expect: {
 		timeout: EXPECT_TIMEOUT,
 	},
