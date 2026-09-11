@@ -76,7 +76,7 @@ jobs:
           if [ "$TEST_RUNNER" = endform ]; then
             args+=(--organization-id=2G1ZCj7X)
           else
-            args+=(--workers=1)
+            args+=(--workers=4)
           fi
           pnpm exec "$TEST_RUNNER" "${args[@]}" > experiment.log 2>&1
 
