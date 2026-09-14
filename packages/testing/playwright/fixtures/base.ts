@@ -214,10 +214,6 @@ export const test = base.extend<
 	},
 
 	n8n: async ({ context, backendUrl, frontendUrl }, use, testInfo) => {
-		if (process.env.E2E_DISABLE_CATCH_ALL_ROUTE === 'true') {
-			// Measure catch-all routing overhead while retaining the targeted API mocks.
-			await context.unroute('**');
-		}
 		await setupDefaultInterceptors(context);
 		const page = await context.newPage();
 
