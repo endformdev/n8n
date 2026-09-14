@@ -61,7 +61,6 @@ jobs:
         env:
           TEST_RUNNER: '${{ matrix.runner }}'
           E2E_NAVIGATION_TIMEOUT: '30000'
-          E2E_RECORD_VIDEO: 'false'
           E2E_REMOTE_RUNNER: "${{ matrix.runner == 'endform' && 'true' || 'false' }}"
           ENDFORM_API_KEY: "${{ matrix.runner == 'endform' && secrets.ENDFORM_API_KEY || '' }}"
         run: |
