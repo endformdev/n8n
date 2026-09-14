@@ -56,6 +56,11 @@ jobs:
         working-directory: packages/testing/playwright
         run: pnpm exec playwright install chromium --with-deps
 
+      - name: Install resource monitor
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y sysstat procps iproute2
+
       - name: Run incremental suite
         working-directory: packages/testing/playwright
         env:
@@ -64,6 +69,30 @@ jobs:
           E2E_REMOTE_RUNNER: "${{ matrix.runner == 'endform' && 'true' || 'false' }}"
           ENDFORM_API_KEY: "${{ matrix.runner == 'endform' && secrets.ENDFORM_API_KEY || '' }}"
         run: |
+          export TZ=UTC
+          {
+            echo "Logical CPUs: $(nproc)"
+            free -m
+            echo 'The first vmstat sample contains averages since boot.'
+          } > host-resources.log
+          vmstat -w -t 5 >> host-resources.log &
+          host_monitor_pid=$!
+          pidstat -h -u -r -d -p ALL 5 > process-resources.log &
+          process_monitor_pid=$!
+          (
+            while true; do
+              date -u '+%Y-%m-%dT%H:%M:%SZ'
+              ss -ltnp 'sport = :5680'
+              sleep 5
+            done
+          ) > backend-listener.log &
+          listener_monitor_pid=$!
+          stop_monitors() {
+            kill "$host_monitor_pid" "$process_monitor_pid" "$listener_monitor_pid" 2>/dev/null || true
+            wait "$host_monitor_pid" "$process_monitor_pid" "$listener_monitor_pid" 2>/dev/null || true
+          }
+          trap stop_monitors EXIT
+
           args=(
             test --project=e2e
             tests/e2e/building-blocks/workflow-entry-points.spec.ts
@@ -103,6 +132,9 @@ jobs:
             packages/testing/playwright/experiment.log
             packages/testing/playwright/typecheck.log
             packages/testing/playwright/lint.log
+            packages/testing/playwright/host-resources.log
+            packages/testing/playwright/process-resources.log
+            packages/testing/playwright/backend-listener.log
             packages/testing/playwright/test-results/
             packages/testing/playwright/test-results.json
             packages/testing/playwright/playwright-report/
