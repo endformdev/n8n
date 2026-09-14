@@ -116,8 +116,9 @@ export async function setupDefaultInterceptors(target: BrowserContext) {
 	});
 
 	// Pathname /api/health
+	// Use URL patterns so Playwright does not intercept unrelated asset requests.
 	await target.route(
-		(url) => url.pathname.endsWith('/api/health'),
+		/^https?:\/\/[^/?#]+\/(?:[^?#]*\/)?api\/health(?:[?#].*)?$/,
 		async (route: Route) => {
 			await route.fulfill({
 				contentType: 'application/json',
@@ -127,37 +128,34 @@ export async function setupDefaultInterceptors(target: BrowserContext) {
 	);
 
 	// Pathname /api/versions/*
-	await target.route(
-		(url) => url.pathname.startsWith('/api/versions/'),
-		async (route: Route) => {
-			await route.fulfill({
-				contentType: 'application/json',
-				body: JSON.stringify([
-					{
-						name: '1.45.1',
-						createdAt: '2023-08-18T11:53:12.857Z',
-						hasSecurityIssue: null,
-						hasSecurityFix: null,
-						securityIssueFixVersion: null,
-						hasBreakingChange: null,
-						documentationUrl: 'https://docs.n8n.io/release-notes/#n8n131',
-						nodes: [],
-						description: 'Includes <strong>bug fixes</strong>',
-					},
-					{
-						name: '1.0.5',
-						createdAt: '2023-07-24T10:54:56.097Z',
-						hasSecurityIssue: false,
-						hasSecurityFix: null,
-						securityIssueFixVersion: null,
-						hasBreakingChange: true,
-						documentationUrl: 'https://docs.n8n.io/release-notes/#n8n104',
-						nodes: [],
-						description:
-							'Includes <strong>core functionality</strong> and <strong>bug fixes</strong>',
-					},
-				]),
-			});
-		},
-	);
+	await target.route(/^https?:\/\/[^/?#]+\/api\/versions\//, async (route: Route) => {
+		await route.fulfill({
+			contentType: 'application/json',
+			body: JSON.stringify([
+				{
+					name: '1.45.1',
+					createdAt: '2023-08-18T11:53:12.857Z',
+					hasSecurityIssue: null,
+					hasSecurityFix: null,
+					securityIssueFixVersion: null,
+					hasBreakingChange: null,
+					documentationUrl: 'https://docs.n8n.io/release-notes/#n8n131',
+					nodes: [],
+					description: 'Includes <strong>bug fixes</strong>',
+				},
+				{
+					name: '1.0.5',
+					createdAt: '2023-07-24T10:54:56.097Z',
+					hasSecurityIssue: false,
+					hasSecurityFix: null,
+					securityIssueFixVersion: null,
+					hasBreakingChange: true,
+					documentationUrl: 'https://docs.n8n.io/release-notes/#n8n104',
+					nodes: [],
+					description:
+						'Includes <strong>core functionality</strong> and <strong>bug fixes</strong>',
+				},
+			]),
+		});
+	});
 }
