@@ -124,7 +124,7 @@ export default defineConfig<CurrentsFixtures, CurrentsWorkerFixtures>({
 	use: {
 		baseURL: WEB_SERVER_URL,
 		trace: 'on',
-		video: 'on',
+		video: process.env.E2E_RECORD_VIDEO === 'false' ? 'off' : 'on',
 		screenshot: 'on',
 		testIdAttribute: 'data-test-id',
 		headless: process.env.SHOW_BROWSER !== 'true',
